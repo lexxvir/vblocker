@@ -9,13 +9,13 @@ use serialize::{json, Encodable, Decodable};
 static TIMEHOLDER_PATH: &'static str = "timeholder";
 static PROCESSES:  [&'static str, ..4] = [ "vlc", "smplayer", "gnome-mplayer", "totem" ];
 //static PROCESSES:  [&'static str, ..1] = [ "sleep" ];
-static UPDATE_TIME: u64 = 5;
+static UPDATE_TIME: i64 = 5;
 
 #[deriving(Encodable, Decodable)]
 #[deriving(Show)]
 pub struct Times {
-	run: u64,
-	idle: u64
+	run: i64,
+	idle: i64
 }
 
 fn load_times() -> Times
@@ -87,10 +87,10 @@ fn kill_processes()
 	}
 }
 
-fn worker( allow_time: u64, deny_time: u64 )
+fn worker( allow_time: i64, deny_time: i64 )
 {
 	loop {
-		std::io::timer::sleep( UPDATE_TIME * 1000 );
+		std::io::timer::sleep( std::time::duration::Duration::seconds( UPDATE_TIME ) );
 
 		let mut times = load_times();
 		if check_processes() {
@@ -124,8 +124,8 @@ fn main()
 		return;
 	}
 
-	let allow_time = from_str::< u64 >( args[ 1 ].as_slice() ).unwrap();
-	let deny_time = from_str::< u64 >( args[ 2 ].as_slice() ).unwrap();
+	let allow_time = from_str::< i64 >( args[ 1 ].as_slice() ).unwrap();
+	let deny_time = from_str::< i64 >( args[ 2 ].as_slice() ).unwrap();
 
 	println!( "Allow time is {} s, Deny time is {} s", allow_time, deny_time );
 
