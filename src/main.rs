@@ -28,7 +28,7 @@ fn load_times() -> Times
 	let content = file.read_to_string();
 	let json_object = match json::from_str( content.unwrap().as_slice() ) {
 		Ok(f) => f,
-		Err(why) => fail!( "Can't parse file [{}] because '{}'", TIMEHOLDER_PATH, why ),
+		Err(why) => panic!( "Can't parse file [{}] because '{}'", TIMEHOLDER_PATH, why ),
 	};
 
 	let mut decoder = json::Decoder::new( json_object );
@@ -42,11 +42,11 @@ fn save_times( times: &Times ) -> ()
 
 	let mut file = match File::create( &Path::new( TIMEHOLDER_PATH ) ) {
 		Ok(f) => f,
-		Err(why) => fail!( "Can't open/create [{}] because '{}'", TIMEHOLDER_PATH, why ),
+		Err(why) => panic!( "Can't open/create [{}] because '{}'", TIMEHOLDER_PATH, why ),
 	};
 
 	match file.write_str( string.as_slice() ) {
-		Err(why) => fail!( "Can't write [{}] because '{}'", TIMEHOLDER_PATH, why ),
+		Err(why) => panic!( "Can't write [{}] because '{}'", TIMEHOLDER_PATH, why ),
 		_ => ()
 	}
 }
@@ -57,7 +57,7 @@ fn is_exist( name: &str ) -> bool
     cmd.arg(name);
 
     match cmd.output() {
-        Err(why) => fail!("couldn't spawn pgrep: {}", why.desc),
+        Err(why) => panic!("couldn't spawn pgrep: {}", why.desc),
         Ok(ProcessOutput { error: _, output: _, status: exit }) => exit.success(),
    }
 }
@@ -81,7 +81,7 @@ fn kill_processes()
 		cmd.arg( *p );
 
 		match cmd.output() {
-			Err(why) => fail!("couldn't spawn pkill: {}", why.desc),
+			Err(why) => panic!("couldn't spawn pkill: {}", why.desc),
 			_ => (),
 		}
 	}
