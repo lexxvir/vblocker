@@ -1,18 +1,19 @@
-extern crate serialize;
+#![feature(std_misc)]
 
-use std::os;
-use std::io::{File};
-use std::io::process::{Command,ProcessOutput};
-use std::io::fs;
-use serialize::{json, Encodable, Decodable};
+extern crate rustc_serialize;
+
+use std::fs::File;
+use std::env;
+use std::process::{Command, Output};
+use rustc_serialize::{json, Encodable};
+use std::io::prelude::*;
 
 static TIMEHOLDER_PATH: &'static str = "timeholder";
-static PROCESSES:  [&'static str, ..4] = [ "vlc", "smplayer", "gnome-mplayer", "totem" ];
-//static PROCESSES:  [&'static str, ..1] = [ "sleep" ];
+static PROCESSES: &'static [&'static str] = &[ "vlc", "smplayer", "gnome-mplayer", "totem" ] /*[ "sleep" ]*/;
 static UPDATE_TIME: i64 = 5;
 
-#[deriving(Encodable, Decodable)]
-#[deriving(Show)]
+#[derive(RustcEncodable, RustcDecodable)]
+#[derive(Debug)]
 pub struct Times {
 	run: i64,
 	idle: i64
@@ -20,25 +21,22 @@ pub struct Times {
 
 fn load_times() -> Times
 {
-	let mut file = match File::open( &Path::new( TIMEHOLDER_PATH ) ) {
+	let mut file = match File::open( TIMEHOLDER_PATH ) {
 		Ok(f) => f,
 		Err(_) => return Times{ run: 0, idle: 0 },
 	};
 
-	let content = file.read_to_string();
-	let json_object = json::from_str( content.unwrap().as_slice() ).unwrap();
-
-	let mut decoder = json::Decoder::new( json_object );
-    let times: Times = Decodable::decode( &mut decoder ).unwrap();
-	return times;
+	let mut content = String::new();
+	file.read_to_string( &mut content ).unwrap();
+	return json::decode( &content ).unwrap();
 }
 
 fn save_times( times: &Times )
 {
-	let string = json::encode( times );
-	let mut file = File::create( &Path::new( TIMEHOLDER_PATH ) ).unwrap();
+	let string = json::encode( times ).unwrap();
+	let mut file = File::create( TIMEHOLDER_PATH ).unwrap();
 
-	file.write_str( string.as_slice() ).unwrap();
+	file.write_all( string.as_bytes() ).unwrap();
 }
 
 fn is_exist( name: &str ) -> bool
@@ -46,7 +44,7 @@ fn is_exist( name: &str ) -> bool
     let mut cmd = Command::new( "pgrep" );
     cmd.arg(name);
 
-    let ProcessOutput { error: _, output: _, status: exit } = cmd.output().unwrap();
+    let Output { stderr: _, stdout: _, status: exit } = cmd.output().unwrap();
 	return exit.success();
 }
 
@@ -74,7 +72,7 @@ fn kill_processes()
 fn worker( allow_time: i64, deny_time: i64 )
 {
 	loop {
-		std::io::timer::sleep( std::time::duration::Duration::seconds( UPDATE_TIME ) );
+		std::thread::sleep_ms( std::time::duration::Duration::seconds( UPDATE_TIME ).num_milliseconds() as u32 );
 
 		let mut times = load_times();
 		if check_processes() {
@@ -92,22 +90,33 @@ fn worker( allow_time: i64, deny_time: i64 )
 		}
 		else if times.idle >= deny_time
 		{
-			fs::unlink( &Path::new( TIMEHOLDER_PATH ) ).unwrap();
+			std::fs::remove_file( TIMEHOLDER_PATH ).unwrap();
 		}
 	}
 }
 
 fn main()
 {
-	let args = os::args();
+	let args = env::args();
 
 	if args.len() < 3
 	{	println!( "Usage: video_blocker <allow time> <deny time>, all times in seconds" );
 		return;
 	}
 
-	let allow_time = from_str::< i64 >( args[ 1 ].as_slice() ).unwrap();
-	let deny_time = from_str::< i64 >( args[ 2 ].as_slice() ).unwrap();
+	let mut allow_time: i64 = 0;
+	let mut deny_time: i64 = 0;
+	let mut i = 0;
+
+	for arg in args {
+		match i {
+			1 => allow_time = arg.parse().unwrap(),
+			2 => deny_time = arg.parse().unwrap(),
+			_ => (),
+		};
+
+		i += 1;
+	}
 
 	println!( "Allow time is {} s, Deny time is {} s", allow_time, deny_time );
 
