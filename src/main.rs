@@ -1,4 +1,3 @@
-#![feature(std_misc)]
 
 extern crate rustc_serialize;
 
@@ -72,7 +71,7 @@ fn kill_processes()
 fn worker( allow_time: i64, deny_time: i64 )
 {
 	loop {
-		std::thread::sleep_ms( std::time::duration::Duration::seconds( UPDATE_TIME ).num_milliseconds() as u32 );
+		std::thread::sleep_ms( UPDATE_TIME as u32 * 1000 );
 
 		let mut times = load_times();
 		if check_processes() {
