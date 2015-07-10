@@ -1,4 +1,2 @@
-install:
-  - curl https://static.rust-lang.org/rustup.sh | sudo bash
-script:
-  - cargo build --verbose
+language: rust
+rust: nightly
