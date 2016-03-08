@@ -9,13 +9,13 @@ use std::io::prelude::*;
 
 static TIMEHOLDER_PATH: &'static str = "timeholder";
 static PROCESSES: &'static [&'static str] = &[ "vlc", "smplayer", "gnome-mplayer", "totem" ] /*[ "sleep" ]*/;
-static UPDATE_TIME: i64 = 5;
+static UPDATE_TIME: u64 = 5;
 
 #[derive(RustcEncodable, RustcDecodable)]
 #[derive(Debug)]
 pub struct Times {
-	run: i64,
-	idle: i64
+	run: u64,
+	idle: u64
 }
 
 fn load_times() -> Times
@@ -68,10 +68,10 @@ fn kill_processes()
 	}
 }
 
-fn worker( allow_time: i64, deny_time: i64 )
+fn worker( allow_time: u64, deny_time: u64 )
 {
 	loop {
-		std::thread::sleep_ms( UPDATE_TIME as u32 * 1000 );
+		std::thread::sleep( std::time::Duration::from_secs( UPDATE_TIME ) );
 
 		let mut times = load_times();
 		if check_processes() {
@@ -103,8 +103,8 @@ fn main()
 		return;
 	}
 
-	let mut allow_time: i64 = 0;
-	let mut deny_time: i64 = 0;
+	let mut allow_time: u64 = 0;
+	let mut deny_time: u64 = 0;
 	let mut i = 0;
 
 	for arg in args {
