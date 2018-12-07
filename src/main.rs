@@ -1,12 +1,6 @@
 use rustc_serialize::json;
 use std::{
-    env,
-    fs::remove_file,
-    fs::File,
-    io::prelude::*,
-    process::{Command, Output},
-    time::Duration,
-    thread::sleep,
+    env::args, fs::remove_file, fs::File, io::prelude::*, process::Command, thread::sleep, time::Duration,
 };
 
 static TIMEHOLDER_PATH: &str = "timeholder";
@@ -41,12 +35,7 @@ fn is_exist(name: &str) -> bool {
     let mut cmd = Command::new("pgrep");
     cmd.arg(name);
 
-    let Output {
-        stderr: _,
-        stdout: _,
-        status: exit,
-    } = cmd.output().unwrap();
-    return exit.success();
+    cmd.output().unwrap().status.success()
 }
 
 fn check_processes() -> bool {
@@ -90,26 +79,13 @@ fn worker(allow_time: u64, deny_time: u64) {
 }
 
 fn main() {
-    let args = env::args();
-
-    if args.len() < 3 {
+    if args().len() < 3 {
         println!("Usage: video_blocker <allow time> <deny time>, all times in seconds");
         return;
     }
 
-    let mut allow_time: u64 = 0;
-    let mut deny_time: u64 = 0;
-    let mut i = 0;
-
-    for arg in args {
-        match i {
-            1 => allow_time = arg.parse().unwrap(),
-            2 => deny_time = arg.parse().unwrap(),
-            _ => (),
-        };
-
-        i += 1;
-    }
+    let allow_time: u64 = args().nth(1).and_then(|x| x.parse().ok()).unwrap_or(0);
+    let deny_time: u64 = args().nth(2).and_then(|x| x.parse().ok()).unwrap_or(0);
 
     println!(
         "Allow time is {} s, Deny time is {} s",
