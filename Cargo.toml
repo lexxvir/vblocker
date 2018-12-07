@@ -3,6 +3,7 @@
 name = "vblocker"
 version = "0.0.1"
 authors = [ "lexx.vir@gmail.com" ]
+edition = "2018"
 
 [dependencies]
 rustc-serialize = "*"
